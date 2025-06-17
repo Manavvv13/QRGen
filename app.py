@@ -136,6 +136,11 @@ def delete_qr():
 
     return redirect(url_for('dashboard'))
 
+@app.route('/init')
+def init():
+    db.create_all()
+    return "Tables created."
+
 @app.route('/r/<qr_id>')
 def redirect_to_original(qr_id):
     qr = QRCode.query.filter_by(redirect_id=qr_id).first()
