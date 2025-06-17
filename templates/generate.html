@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Generated QRs</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
+    <div class="flex justify-between mb-4">
+      <h1 class="text-xl font-bold">QR Codes Generated</h1>
+      <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:underline">← Back</a>
+    </div>
+
+    <p class="text-green-700 bg-green-100 px-4 py-2 rounded mb-4">
+      Successfully generated {{ qr_codes|length }} QR code{{ 's' if qr_codes|length > 1 else '' }}!
+    </p>
+
+    <div class="grid md:grid-cols-3 gap-4">
+      {% for qr in qr_codes %}
+        <div class="border p-4 text-center rounded">
+          <img src="{{ url_for('static', filename='qrs/' + qr.filename) }}" class="mx-auto h-32 w-32 mb-2" />
+          <p class="text-sm truncate">{{ qr.redirect_url }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-xl font-bold">Dashboard</h1>
+      <a href="{{ url_for('logout') }}" class="text-red-600 hover:underline">Logout</a>
+    </div>
+
+    <form method="POST" action="{{ url_for('generate_qrs') }}" class="grid md:grid-cols-3 gap-4 mb-6">
+      <input type="url" name="url" required placeholder="Enter URL" class="px-4 py-2 border rounded" />
+      <input type="number" name="count" required min="1" max="100" placeholder="How many QRs?" class="px-4 py-2 border rounded" />
+      <button class="bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Generate</button>
+    </form>
+
+    <h2 class="text-lg font-semibold mb-4">Your QR Codes</h2>
+    <div class="grid md:grid-cols-3 gap-4">
+      {% for qr in qr_codes %}
+        <div class="border p-4 rounded text-center">
+          <img src="{{ url_for('static', filename='qrs/' + qr.filename) }}" class="mx-auto h-32 w-32 mb-2" />
+          <p class="text-sm truncate">{{ qr.original_url }}</p>
+          <p class="text-sm font-semibold mt-1">Scans: {{ qr.scan_count }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html>
