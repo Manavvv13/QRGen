@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import sqlite3, qrcode, os, uuid
+from werkzeug.security import generate_password_hash, check_password_hash
+
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -37,7 +39,8 @@ def home():
 def register():
     if request.method == 'POST':
         email = request.form['email']
-        password = request.form['password']
+        password = generate_password_hash(request.form['password'])
+
         try:
             with get_db_connection() as conn:
                 conn.execute('INSERT INTO admins (email, password) VALUES (?, ?)', (email, password))
@@ -54,7 +57,12 @@ def login():
         email = request.form['email']
         password = request.form['password']
         conn = get_db_connection()
-        admin = conn.execute('SELECT * FROM admins WHERE email=? AND password=?', (email, password)).fetchone()
+        admin = conn.execute('SELECT * FROM admins WHERE email=?', (email,)).fetchone()
+        if admin and check_password_hash(admin['password'], password):
+            session['admin_id'] = admin['id']
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid credentials.', 'error')
         conn.close()
         if admin:
             session['admin_id'] = admin['id']
