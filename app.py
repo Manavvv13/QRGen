@@ -103,6 +103,31 @@ def generate_qrs():
     conn.close()
     return render_template('generate.html', qr_codes=qr_codes)
 
+@app.route('/delete_qr', methods=['POST'])
+def delete_qr():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+
+    qr_id = request.form['qr_id']
+
+    conn = get_db_connection()
+    qr = conn.execute('SELECT * FROM qr_codes WHERE id = ? AND admin_id = ?', (qr_id, session['admin_id'])).fetchone()
+
+    if qr:
+        # Delete QR image file
+        qr_path = os.path.join(app.config['UPLOAD_FOLDER'], qr['filename'])
+        if os.path.exists(qr_path):
+            os.remove(qr_path)
+
+        # Delete record from DB
+        conn.execute('DELETE FROM qr_codes WHERE id = ?', (qr_id,))
+        conn.commit()
+
+    conn.close()
+    flash('QR code deleted successfully.', 'success')
+    return redirect(url_for('dashboard'))
+
+
 @app.route('/r/<qr_id>')
 def redirect_to_original(qr_id):
     conn = get_db_connection()

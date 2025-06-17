@@ -1,33 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
+<body class="bg-gray-100 min-h-screen p-4">
+
+  <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-xl font-bold">Dashboard</h1>
+      <h1 class="text-2xl font-bold">QR Code Dashboard</h1>
       <a href="{{ url_for('logout') }}" class="text-red-600 hover:underline">Logout</a>
     </div>
 
-    <form method="POST" action="{{ url_for('generate_qrs') }}" class="grid md:grid-cols-3 gap-4 mb-6">
-      <input type="url" name="url" required placeholder="Enter URL" class="px-4 py-2 border rounded" />
-      <input type="number" name="count" required min="1" max="100" placeholder="How many QRs?" class="px-4 py-2 border rounded" />
-      <button class="bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Generate</button>
-    </form>
-
-    <h2 class="text-lg font-semibold mb-4">Your QR Codes</h2>
-    <div class="grid md:grid-cols-3 gap-4">
-      {% for qr in qr_codes %}
-        <div class="border p-4 rounded text-center">
-          <img src="{{ url_for('static', filename='qrs/' + qr.filename) }}" class="mx-auto h-32 w-32 mb-2" />
-          <p class="text-sm truncate">{{ qr.original_url }}</p>
-          <p class="text-sm font-semibold mt-1">Scans: {{ qr.scan_count }}</p>
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+            <div class="p-3 rounded bg-{{ 'green' if category == 'success' else 'red' }}-100 text-{{ 'green' if category == 'success' else 'red' }}-700">
+              {{ message }}
+            </div>
+          {% endfor %}
         </div>
-      {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- QR Form -->
+    <div class="bg-white p-6 rounded-xl shadow mb-8">
+      <form method="POST" action="{{ url_for('generate_qrs') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block font-medium mb-1">Target URL</label>
+          <input type="url" name="url" required placeholder="https://example.com"
+                 class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div>
+          <label class="block font-medium mb-1">Number of QR Codes</label>
+          <input type="number" name="count" required min="1" max="100"
+                 class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div class="flex items-end">
+          <button type="submit"
+                  class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+            Generate
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- QR List -->
+    <div class="bg-white p-6 rounded-xl shadow">
+      <h2 class="text-xl font-semibold mb-4">Generated QR Codes</h2>
+      {% if qr_codes %}
+        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {% for qr in qr_codes %}
+            <div class="border rounded-lg p-4 text-center">
+              <img src="{{ url_for('static', filename='qrs/' + qr['filename']) }}" alt="QR" class="w-32 h-32 mx-auto mb-2" />
+              <p class="text-sm text-gray-600 truncate">{{ qr['original_url'] }}</p>
+              <p class="text-sm font-semibold mt-1">Scans: {{ qr['scan_count'] }}</p>
+
+              <!-- Delete Button -->
+              <form method="POST" action="{{ url_for('delete_qr') }}" class="mt-2" onsubmit="return confirm('Are you sure you want to delete this QR code?');">
+                <input type="hidden" name="qr_id" value="{{ qr['id'] }}">
+                <button type="submit" class="text-red-600 hover:underline text-sm">Delete</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-500">No QR codes generated yet.</p>
+      {% endif %}
     </div>
   </div>
+
 </body>
 </html>
