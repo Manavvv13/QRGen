@@ -37,10 +37,7 @@ class QRCode(db.Model):
     admin = db.relationship('Admin', backref=db.backref('qrs', lazy=True))
 
 # Run only once to initialize DB
-@app.route('/init')
-def init_db():
-    db.create_all()
-    return "Database initialized."
+
 
 @app.route('/')
 def home():
