@@ -56,8 +56,19 @@
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {% for qr in qr_codes %}
             <div class="border rounded-lg p-4 text-center">
+              <!-- QR Image -->
               <img src="{{ url_for('static', filename='qrs/' + qr['filename']) }}" alt="QR" class="w-32 h-32 mx-auto mb-2" />
-              <p class="text-sm text-gray-600 truncate">{{ qr['original_url'] }}</p>
+              
+              <!-- Download Icon -->
+              <a href="{{ url_for('static', filename='qrs/' + qr['filename']) }}" download title="Download QR"
+                 class="flex justify-center mt-2 text-gray-600 hover:text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 14.5a1 1 0 011-1h2v-5a1 1 0 112 0v5h2a1 1 0 110 2H4a1 1 0 01-1-1zm5-9a1 1 0 011 1v5.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 011.414-1.414L7 12.086V6.5a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+              </a>
+
+              <!-- QR Info -->
+              <p class="text-sm text-gray-600 truncate mt-2">{{ qr['original_url'] }}</p>
               <p class="text-sm font-semibold mt-1">Scans: {{ qr['scan_count'] }}</p>
 
               <!-- Delete Button -->
