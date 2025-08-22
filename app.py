@@ -2,30 +2,35 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import qrcode, os, uuid
-import datetime
-import urllib.parse
-import os
 
+# --- Flask App Setup ---
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "your_secret_key")
 app.config['UPLOAD_FOLDER'] = 'static/qrs'
 
-# PostgreSQL connection string from environment (Render)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# --- Database Setup (Render Fix for DATABASE_URL) ---
+raw_db_url = os.environ.get("DATABASE_URL")
+
+# Convert postgres:// → postgresql+psycopg2://
+if raw_db_url and raw_db_url.startswith("postgres://"):
+    raw_db_url = raw_db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+
+app.config["SQLALCHEMY_DATABASE_URI"] = raw_db_url
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
-# Make sure QR folder exists
+# Ensure QR folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Admin model
+
+# --- Models ---
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
 
-# QR Code model
+
 class QRCode(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'))
@@ -36,12 +41,12 @@ class QRCode(db.Model):
 
     admin = db.relationship('Admin', backref=db.backref('qrs', lazy=True))
 
-# Run only once to initialize DB
 
-
+# --- Routes ---
 @app.route('/')
 def home():
     return redirect(url_for('login'))
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -60,6 +65,7 @@ def register():
             return redirect(url_for('login'))
     return render_template('register.html')
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -74,10 +80,12 @@ def login():
             flash('Invalid credentials.', 'error')
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     session.pop('admin_id', None)
     return redirect(url_for('login'))
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -85,6 +93,7 @@ def dashboard():
         return redirect(url_for('login'))
     qr_list = QRCode.query.filter_by(admin_id=session['admin_id']).all()
     return render_template('dashboard.html', qr_codes=qr_list)
+
 
 @app.route('/generate_qrs', methods=['POST'])
 def generate_qrs():
@@ -114,6 +123,7 @@ def generate_qrs():
     db.session.commit()
     return render_template('generate.html', qr_codes=qr_codes)
 
+
 @app.route('/delete_qr', methods=['POST'])
 def delete_qr():
     if 'admin_id' not in session:
@@ -133,10 +143,12 @@ def delete_qr():
 
     return redirect(url_for('dashboard'))
 
+
 @app.route('/init')
 def init():
     db.create_all()
     return "Tables created."
+
 
 @app.route('/r/<qr_id>')
 def redirect_to_original(qr_id):
@@ -147,5 +159,7 @@ def redirect_to_original(qr_id):
         return redirect(qr.original_url)
     return 'Invalid QR code.', 404
 
+
+# --- Main ---
 if __name__ == '__main__':
     app.run(debug=True)
